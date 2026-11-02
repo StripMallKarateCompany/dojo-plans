@@ -36,7 +36,9 @@ Go plans and the test apps in `buildtest/apps` were built this way, and their bi
 - `translate.py` turns each callback statement into b's operations. What it cannot say faithfully it
   keeps as bash in an `;; UNPORTED (...)` block.
 - `port.py` writes the metadata and phases, renames to Dojo's names, and marks every problem in the
-  plan's header so `check.py` holds it back.
+  plan's header so `check.py` holds it back. It formats each plan it writes as `smk format` does
+  (fnlfmt, twice, since one pass leaves some plans unsettled) and runs `lints.py` on it, so
+  regenerating a plan reproduces the committed one.
 - `lints.py` rewrites a plan to pass fennel-ls's lints, from fennel-ls's report: method calls,
   nested `..`, a `var` never set, and the declarations the translator makes for every variable a bash
   function assigns. `port.py` runs it on each plan it writes; a definition it cannot remove without
