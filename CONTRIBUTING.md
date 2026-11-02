@@ -7,7 +7,8 @@ builds for Linux targets only.
 
 - The origin is `karate` and the maintainer `Strip Mall Karate Company`.
 - A plan's callbacks call the build's own operations (`b:run` with an argument list, `b:install`,
-  `b:env` and the rest). A plan never runs a shell script.
+  `b:env` and the rest). A plan never runs a shell itself; a package's own scripts (`./configure`,
+  `./bootstrap`) run through `b:run`.
 - Every plan loads: `doj-plan-build show <dir>` prints its metadata.
 - History is kept: no rebase, squash or amend of pushed commits, and pull requests land with merge
   commits. Commit subjects are imperative; bodies say why.
