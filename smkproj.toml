@@ -24,8 +24,9 @@ Provider = ""
 Provider = "workq"
 # Dojo's own project, which the dojo and dojo-plans repositories share.
 Project = "DOJ"
-# Dojo and its plans share one label: workq has no dojo-plans label, and smk issue adds this one to every item.
-Label = "dojo"
+# Dojo and its plans share the DOJ project, and each repository has its own label, so smk issue groom reads only this
+# repository's items here.
+Label = "dojo-plans"
 Workspace = "smk"
 [Format]
 # swamp/ keeps its own Deno toolchain and formatter. A plan directory holds a package's plan.fnl, which
