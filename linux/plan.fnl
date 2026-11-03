@@ -2,7 +2,10 @@
 ;; linux 7.3, the latest release on 2026-10-27, matching linux-headers. Written by hand.
 
 ;; Built in, since the kernel loads no modules: what a QEMU or KVM guest needs to reach its
-;; initramfs, console, disk and network.
+;; initramfs, console, disk and network, then what a PC like smk-1 needs (DOJ-33): its NVMe or
+;; SATA disk, its Realtek or Intel wired NIC, USB sticks and keyboards, a GPT disk booted by
+;; UEFI, and the firmware's framebuffer as a console. The RTL8125A's firmware patch is left out:
+;; r8169 runs without it.
 (local builtin [:BLK_DEV_INITRD
                 :RD_GZIP
                 :DEVTMPFS
@@ -22,7 +25,23 @@
                 :E1000
                 :PACKET
                 :UNIX
-                :INET])
+                :INET
+                :BLK_DEV_NVME
+                :ATA
+                :SATA_AHCI
+                :NET_VENDOR_REALTEK
+                :R8169
+                :IGB
+                :USB_XHCI_HCD
+                :USB_XHCI_PCI
+                :USB_STORAGE
+                :USB_UAS
+                :USB_HID
+                :EFI_STUB
+                :EFI_PARTITION
+                :DRM_EFIDRM
+                :DRM_FBDEV_EMULATION
+                :FRAMEBUFFER_CONSOLE])
 
 {:name :linux
  :origin :karate
