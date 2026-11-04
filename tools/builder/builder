@@ -10,7 +10,7 @@ readonly BUILD_HOST="${DOJO_BUILD_HOST:-smk-1}"
 readonly IMAGE=dojo-builder
 readonly CONTAINER=dojo-builder
 readonly ROOT_VOLUME=dojo-root
-# On the build host: the plans, Dojo's plan crate and the builder's home, mounted at /work.
+# On the build host: the plans, a Dojo tree and the builder's home, mounted at /work.
 readonly HOST_DIR=dojo-builder
 # The karate origin's signing key pair, each key file base64-encoded in its own field. Neither the
 # image nor ~/dojo-builder on the host holds it: `key` puts it in the /doj volume.
@@ -87,13 +87,13 @@ sync)
   ;;
 tools)
   # doj-plan-build, and the doj it signs packages with, from the checkout's committed tree. Both
-  # build with the image's Rust, so a builder with no karate packages yet has them.
+  # build with the image's Rust, so a builder with no karate packages yet has them, from Dojo's one
+  # workspace and lock.
   (($# == 1)) || usage
-  send_tree "$1" components/plan/ dojo-plan target/
   send_tree "$1" . dojo target/
   exec ssh "${BUILD_HOST}" "docker exec ${CONTAINER} nice -n 15 sh -c '
-      cargo build --release --manifest-path /work/dojo-plan/Cargo.toml --target-dir /work/dojo-plan/target &&
-      ln -sf /work/dojo-plan/target/release/doj-plan-build /work/bin/doj-plan-build &&
+      cargo build --release --locked --manifest-path /work/dojo/Cargo.toml --target-dir /work/dojo/target -p dojo-plan --bin doj-plan-build &&
+      ln -sf /work/dojo/target/release/doj-plan-build /work/bin/doj-plan-build &&
       doj-plan-build show /work/plans/zlib --target x86_64-linux >/dev/null && echo doj-plan-build ready &&
       cargo build --release --locked --manifest-path /work/dojo/Cargo.toml --target-dir /work/dojo/target -p doj --bin doj &&
       ln -sf /work/dojo/target/release/doj /work/bin/doj && doj --version'"

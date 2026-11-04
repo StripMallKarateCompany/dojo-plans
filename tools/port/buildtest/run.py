@@ -9,7 +9,7 @@ flags and pkg-config path name the installable's bin, include and lib directorie
 gives a library with several outputs one). The plans build in the order given, for aarch64-linux (a plan that
 lists only x86_64-linux is built as if it listed aarch64-linux too), into ~/dojo-buildtest in the
 VM, which keeps what was built for the next run; each later plan finds the earlier ones. Needs
-doj-plan-build built at ~/plan-file-ops/components/plan/target/debug/ in the VM, as difftest does.
+doj-plan-build built at ~/plan-file-ops/target/debug/ in the VM, as difftest does.
 Prints each plan's result and the end of a failed build's log; exits nonzero if any failed.
 """
 
@@ -121,7 +121,7 @@ def main(argv):
             f.write(VM_SCRIPT)
         archive = shutil.make_archive(os.path.join(tmp, "buildtest"), "tar", tmp, ".")
         remote = ("set -e; d=$(mktemp -d); tar --warning=no-timestamp -xf - -C \"$d\"; "
-                  "bash \"$d/run.sh\" \"$d\" \"$HOME/plan-file-ops/components/plan/target/debug/doj-plan-build\" "
+                  "bash \"$d/run.sh\" \"$d\" \"$HOME/plan-file-ops/target/debug/doj-plan-build\" "
                   + shlex.join([standins] + plans) + "; s=$?; rm -rf \"$d\"; exit $s")
         env = dict(os.environ, DOJO_BUILDER_STATE=state, DOJO_BUILDER_PORT=port)
         with open(archive, "rb") as f:
