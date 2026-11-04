@@ -25,11 +25,13 @@ the `karate` base packages (`tools/builder`).
 ## Landing
 
 Work in a tree (`trees add <name>`), commit on its `worktree/<name>` branch and open the pull
-request with `smk pr create`. The host is GitHub and no CI builds this repository (no buildq
-pipeline, no protection on `main`), so `make ci` in the tree is the whole gate. Auto-merge is off:
-once it passes, land with `gh pr merge --merge` (merge commits only). Pushed commits are never
-rebased, squashed or amended. Live-state changes outside a merge (a build on the builder host, a
-package upload to Builder) need explicit authorization.
+request with `smk pr create` and request its merge with `smk pr merge`, without asking. The host
+is GitHub (`StripMallKarateCompany/dojo-plans`): buildq builds every push (`.buildq/pipeline.yml`
+runs `make ci`), `main` requires its `buildq` status, and automerge's GitHub App lands a writer's
+pull request once it passes (smk/automerge README "GitHub"). `.github/automerge.json` names the
+merge commit as the one style. Pushed commits are never rebased, squashed or amended. Live-state
+changes outside a merge (a build on the builder host, a package upload to Builder) need explicit
+authorization.
 
 ## Where the rest lives
 
