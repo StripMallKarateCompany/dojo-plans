@@ -128,7 +128,7 @@ def main(argv):
                 "export PATH=\"$(echo \"$p\" | grep -v local-lib | head -1)/bin:$PATH\" "
                 "PERL5LIB=\"$(ls -d \"$(echo \"$p\" | grep local-lib | head -1)\"/lib/perl5/site_perl/5*)\"; ")
         remote = (perl + "set -e; d=$(mktemp -d); tar --warning=no-timestamp -xf - -C \"$d\"; "
-                  "bash \"$d/run.sh\" \"$d\" \"$HOME/plan-file-ops/components/plan/target/debug/doj-plan-build\"; "
+                  "bash \"$d/run.sh\" \"$d\" \"$HOME/plan-file-ops/target/debug/doj-plan-build\"; "
                   "s=$?; rm -rf \"$d\"; exit $s")
         env = dict(os.environ, DOJO_BUILDER_STATE=state, DOJO_BUILDER_PORT=port)
         with open(archive, "rb") as f:

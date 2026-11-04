@@ -19,7 +19,7 @@ python3 -I tools/port/buildtest/run.py <dojo-checkout> <builder-state> <builder-
 
 `difftest` needs the builder VM running (`support/vm/builder start` in a dojo checkout, with its own
 `DOJO_BUILDER_STATE` and `DOJO_BUILDER_PORT`) and `doj-plan-build` built in it at
-`~/plan-file-ops/components/plan/target/debug/` (sync the runtime branch there and `cargo build`). It
+`~/plan-file-ops/target/debug/` (sync the runtime branch there and `cargo build -p dojo-plan`). It
 runs each case in `difftest/cases.txt` as bash in one tree and as its Fennel translation in another;
 the trees must match. Add a case for every new translation, and break the translation once to see
 its case fail.
