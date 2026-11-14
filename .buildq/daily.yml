@@ -1,0 +1,23 @@
+# The daily build (DOJ-23). A buildq schedule of this pipeline names this
+# file (its pipeline_file, @daily in UTC), and nothing else runs it: a push
+# builds pipeline.yml alone. smk proj renders pipeline.yml and leaves this
+# file to the repository, so a render keeps the daily step.
+#
+# The step takes the dojo-builder queue, which only the agent of that name
+# on smk-1 holds, pinned to this repository's main. It reaches the plan
+# builder through the builder's gate (tools/builder/gate.py), and builds
+# only when the build's source is schedule (tools/builder/daily).
+# DOJ-19 turns the build of one plan into the daily bump.
+notify:
+  - email: "builds@reset.dev"
+    if: build.state == "failed"
+steps:
+  - label: "daily build"
+    key: daily
+    command: tools/builder/daily zlib
+    branches: main
+    timeout_in_minutes: 180
+    env:
+      DOJO_BUILDER_GATE: reset@localhost
+    agents:
+      queue: dojo-builder

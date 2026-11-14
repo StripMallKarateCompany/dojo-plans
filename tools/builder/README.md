@@ -18,6 +18,7 @@ box.
 | `key`                   | Imports the karate origin's signing key pair from 1Password into `/doj/cache/keys`                  |
 | `dojo <dojo-checkout>`  | Unpacks that checkout's committed `HEAD` into `/work/dojo`, for building Dojo's own component plans |
 | `standins`              | Gives every base plan an empty `0.0.0` package, so a first build resolves its dependencies          |
+| `gate`                  | Installs this checkout's `gate.py` and `state.py` on the host, for the daily build                  |
 | `status`                | The plans' last builds counted by status, and the failures blocking the most plans                  |
 | `wait`                  | Returns once nothing builds from `/work/plans`, riding out ssh failures for ten minutes             |
 | `failures`              | One line per failed plan: its name, a tab, and the last error in its log                            |
@@ -45,6 +46,47 @@ finished, with no process left behind it, makes `sync` refuse and `wait` exit 4:
 commit that merges them. Keep a local `builder-head` branch that merges `origin/main` with every
 pending branch, re-merge it when one changes, and sync only `builder-head`. Syncing a single branch
 drops the others' changes from the tree.
+
+## The daily build
+
+A buildq schedule on dojo-plans (`@daily`, UTC) builds `main` from `.buildq/daily.yml` alone; a push
+builds `.buildq/pipeline.yml`, which smk renders, and never this file, which smk leaves alone. Its one
+step, `tools/builder/daily`, takes the `dojo-builder` queue, held only by the buildq agent of that name
+on smk-1, which runs only this repository's `main`. The step checks that its build's `BUILDQ_SOURCE` is
+`schedule`, and in any other build cancels itself. It sends its checkout's committed tree to the
+builder, then builds each plan it names (`zlib` until DOJ-19 makes the step the daily bump).
+
+The container belongs to the Docker daemon of its owner on the host, and whoever can run `docker` there
+is root on smk-1, so the agent gets no Docker group and no shell. It reaches the builder through
+`gate.py`: the agent's key is in the owner's `~/.ssh/authorized_keys` with a forced command, and the gate
+runs one of three requests from `SSH_ORIGINAL_COMMAND`, refusing anything else:
+
+| Request        | What the gate does                                                                       |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| `sync`         | Unpacks the tar on stdin into `/work/daily` in the container, in place of what was there |
+| `build <plan>` | `doj-plan-build build /work/daily/<plan> --target x86_64-linux`, under `nice`            |
+| `running`      | `state.py running` in the container                                                      |
+
+`sync` and `build` refuse (exit 3) while anything builds in the container, a person's run from
+`/work/plans` included, so the daily build never syncs under a run or builds beside one; a run swamp
+never finished, with no process behind it, does not hold it. `/work/plans` is never touched. The gate
+and the `state.py` it asks are the copies `gate` installed in `~/.local/share/dojo-builder-gate`, outside
+the container's mounts, so a build changes neither; reinstall after either changes. Packages the daily
+build makes land in `/doj` beside a person's.
+
+Setting it up changes live state, so each step needs Jamie's authorization:
+
+1. `builder gate` from a checkout of `main`.
+2. The agent: `[hosts.smk-1.agents.dojo-builder]` in smk/infrastructure's `inventory/hosts.toml`
+   (`queues = ["dojo-builder"]`, `repositories = ["StripMallKarateCompany/dojo-plans"]`,
+   `branches = ["main"]`, no credential), released with a signed `hosts-*` tag, then
+   `make agent ARGS="smk-1 dojo-builder"`.
+3. The agent's public key in the owner's `~/.ssh/authorized_keys` on smk-1, as
+   `restrict,from="127.0.0.1,::1",command="python3 -I .local/share/dojo-builder-gate/gate.py" <key>`, and
+   smk-1's host key pinned for `localhost` in the agent's `~/.ssh/known_hosts`.
+4. The schedule: a `buildq_pipeline_schedule` in smk/infrastructure's `terraform/services/buildq/schedules.tf`
+   for `StripMallKarateCompany/dojo-plans`, `cronline = "@daily"`, `branch = "main"`,
+   `pipeline_file = ".buildq/daily.yml"`, applied by hand there.
 
 ## Checking gcc's wrapper
 

@@ -12,6 +12,9 @@ readonly CONTAINER=dojo-builder
 readonly ROOT_VOLUME=dojo-root
 # On the build host: the plans, a Dojo tree and the builder's home, mounted at /work.
 readonly HOST_DIR=dojo-builder
+# On the build host, outside the container's mounts: the gate a scheduled build's agent reaches the
+# builder through (gate.py), with the state.py it asks, so a build cannot change either.
+readonly GATE_DIR=.local/share/dojo-builder-gate
 # The karate origin's signing key pair, each key file base64-encoded in its own field. Neither the
 # image nor ~/dojo-builder on the host holds it: `key` puts it in the /doj volume.
 readonly KEY_ITEM="op://OMG SecOps/karate origin signing key"
@@ -24,7 +27,7 @@ readonly WAIT_SECONDS=30
 readonly WAIT_SSH_FAILURES=20
 
 usage() {
-  echo >&2 "usage: $(basename "$0") image | start | sync [--force] | tools <dojo-checkout> | key | dojo <dojo-checkout> | standins | status | wait | failures | check-wrapper | run <command>... | shell | stop | remove"
+  echo >&2 "usage: $(basename "$0") image | start | sync [--force] | tools <dojo-checkout> | key | dojo <dojo-checkout> | standins | gate | status | wait | failures | check-wrapper | run <command>... | shell | stop | remove"
   exit 2
 }
 
@@ -123,6 +126,14 @@ standins)
         mkdir -p \$dir && echo karate/\$name/0.0.0/20200101000000 > \$dir/IDENT &&
           printf x86_64-linux > \$dir/TARGET
       done; ls /doj/pkgs/karate | wc -l'"
+  ;;
+gate)
+  # The committed gate.py and state.py, installed where the daily build's forced command runs them
+  # (README "The daily build"), replacing what was there.
+  (($# == 0)) || usage
+  git -C "$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)" archive --format=tar HEAD:tools/builder gate.py state.py |
+    on_host "set -e; mkdir -p ${GATE_DIR}; tar -xf - -C ${GATE_DIR}; chmod 0644 ${GATE_DIR}/gate.py ${GATE_DIR}/state.py;
+               SSH_ORIGINAL_COMMAND=nothing python3 -I ${GATE_DIR}/gate.py 2>&1 | grep -q 'not a request' && echo gate installed"
   ;;
 status | failures)
   (($# == 0)) || usage

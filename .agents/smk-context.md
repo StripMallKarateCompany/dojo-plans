@@ -17,3 +17,6 @@ every change needs.
 - `tools/builder` runs plans' builds in a container on smk-1, natively for `x86_64-linux`:
   [tools/builder/README.md](../tools/builder/README.md) has its commands and first-build order.
   A build there changes live state and needs explicit authorization.
+- The daily build is `.buildq/daily.yml`, which a buildq schedule names and smk proj leaves alone. Its step
+  (`tools/builder/daily`) runs on the `dojo-builder` agent and reaches the builder only through
+  `tools/builder/gate.py`'s three requests: [tools/builder/README.md](../tools/builder/README.md), "The daily build".

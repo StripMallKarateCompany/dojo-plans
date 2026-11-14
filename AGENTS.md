@@ -29,7 +29,9 @@ request with `smk pr create` and request its merge with `smk pr merge`, without 
 is GitHub (`StripMallKarateCompany/dojo-plans`): buildq builds every push (`.buildq/pipeline.yml`
 runs `make ci`), `main` requires its `buildq` status, and automerge's GitHub App lands a writer's
 pull request once it passes (smk/automerge README "GitHub"). `.github/automerge.json` names the
-merge commit as the one style. Pushed commits are never rebased, squashed or amended. Live-state
+merge commit as the one style. A buildq schedule builds `main` daily from `.buildq/daily.yml`, which smk leaves
+alone, on the builder (`tools/builder/README.md`, "The daily build"). Pushed commits are never rebased, squashed or
+amended. Live-state
 changes outside a merge (a build on the builder host, a package upload to Builder) need explicit
 authorization.
 
