@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# The daily build's step (.buildq/daily.yml): sends this checkout's committed tree to the plan
+# builder through its gate (gate.py) and builds the plans named, in order. It runs only in a build
+# a buildq schedule started; in any other build it cancels its own step, so the build reads as
+# cancelled rather than passed. DOJO_BUILDER_GATE names the gate's ssh destination, the builder
+# owner's account on smk-1 as the agent reaches it. tools/builder/README.md, "The daily build".
+#
+# Exit: the gate's status for the first request that failed; 2 for a wrong call.
+set -euo pipefail
+
+usage() {
+  echo >&2 "usage: $(basename "$0") <plan>..."
+  exit 2
+}
+
+(($# >= 1)) || usage
+
+if [[ "${BUILDQ_SOURCE:-}" != schedule ]]; then
+  reason="the daily build runs only from its buildq schedule, and this build's source is ${BUILDQ_SOURCE:-not buildq}"
+  if [[ -n "${BUILDQ_STEP_KEY:-}" ]]; then
+    echo >&2 "daily: ${reason}; cancelling the step"
+    exec buildq-agent step cancel --step "${BUILDQ_STEP_KEY}" --reason "${reason}"
+  fi
+  echo >&2 "daily: ${reason}"
+  exit 2
+fi
+
+readonly GATE="${DOJO_BUILDER_GATE:?DOJO_BUILDER_GATE names the gate, as user@host}"
+
+# The gate's forced command reads the request from SSH_ORIGINAL_COMMAND, so each word goes as one.
+gate() { ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "${GATE}" "$@"; }
+
+git archive --format=tar HEAD | gate sync
+for plan in "$@"; do
+  echo "--- doj-plan-build build ${plan}"
+  gate build "${plan}"
+done
